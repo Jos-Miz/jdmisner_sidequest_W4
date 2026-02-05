@@ -1,6 +1,6 @@
 ## Project Title
 
-GBDA302 Week 4 Example 1: Grid + Static Maze
+GBDA302 Week 4 Example 5: Blob Platformer (JSON + Classes)
 
 ---
 
@@ -12,7 +12,8 @@ Karen Cochrane and David Han
 
 ## Description
 
-This sketch demonstrates how a 2D array represents a maze/game level.
+This matches the structure of the original blob sketch from Week 2 but moves
+details into classes.
 
 ---
 
@@ -20,9 +21,11 @@ This sketch demonstrates how a 2D array represents a maze/game level.
 
 Learning Goals:
 
-- Nested loops to iterate through grid rows/columns
-- Converting grid coordinates (r,c) → screen coordinates (x,y)
-- Tile-based rendering (every cell = one rectangle)
+- - load JSON in preload()
+- create WorldLevel from JSON
+- create BlobPlayer
+- update + draw each frame
+- handle input events (jump, optional next level)
 
 ---
 

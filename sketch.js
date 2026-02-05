@@ -1,109 +1,88 @@
 /*
-Week 4 — Example 1: Grid + Static Maze
+Week 4 — Example 5: Example 5: Blob Platformer (JSON + Classes)
 Course: GBDA302
 Instructors: Dr. Karen Cochrane and David Han
 Date: Feb. 5, 2026
 
-PURPOSE: This is the simplest possible p5.js sketch that demonstrates:
-1. How a 2D array represents a maze/game level
-2. Nested loops to iterate through grid rows/columns
-3. Converting grid coordinates (r,c) → screen coordinates (x,y)
-4. Tile-based rendering (every cell = one rectangle)
+This file orchestrates everything:
+- load JSON in preload()
+- create WorldLevel from JSON
+- create BlobPlayer
+- update + draw each frame
+- handle input events (jump, optional next level)
+
+This matches the structure of the original blob sketch from Week 2 but moves
+details into classes.
 */
 
-const TS = 32; // TILE SIZE: pixels per grid cell (32x32 squares)
+let data; // raw JSON data
+let levelIndex = 0;
 
-/*
-GRID LEGEND (how numbers map to visuals):
-- 0 = floor (walkable, light gray)
-- 1 = wall (blocked, dark teal)
-*/
-const grid = [
-  // Row 0 (top edge - all walls)
-  [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+let world; // WorldLevel instance (current level)
+let player; // BlobPlayer instance
 
-  // Row 1 (open hallway with wall in middle)
-  [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1],
+function preload() {
+  // Load the level data from disk before setup runs.
+  data = loadJSON("levels.json");
+}
 
-  // Row 2 (complex maze pattern)
-  [1, 0, 1, 1, 0, 1, 0, 1, 1, 1, 0, 1, 0, 1, 0, 1],
-
-  // Row 3
-  [1, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1],
-
-  // Row 4
-  [1, 0, 1, 0, 1, 1, 1, 1, 0, 1, 1, 1, 0, 1, 0, 1],
-
-  // Row 5
-  [1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1],
-
-  // Row 6
-  [1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1],
-
-  // Row 7
-  [1, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1],
-
-  // Row 8
-  [1, 0, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 0, 1],
-
-  // Row 9
-  [1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1],
-
-  // Row 10 (bottom edge - all walls)
-  [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
-];
-
-/*
-p5.js SETUP: Runs once when sketch loads
-*/
 function setup() {
-  // Canvas size = grid dimensions × tile size
-  // grid[0].length = 16 columns, grid.length = 11 rows
-  // Canvas = 16×32 = 512px wide, 11×32 = 352px tall
-  createCanvas(grid[0].length * TS, grid.length * TS);
+  // Create the player once (it will be respawned per level).
+  player = new BlobPlayer();
 
-  // Drawing style setup
-  noStroke(); // No black outlines on tiles (clean look)
-  textFont("sans-serif"); // Clean font for UI text
-  textSize(14); // Small text size for HUD
+  // Load the first level.
+  loadLevel(0);
+
+  // Simple shared style setup.
+  noStroke();
+  textFont("sans-serif");
+  textSize(14);
+}
+
+function draw() {
+  // 1) Draw the world (background + platforms)
+  world.drawWorld();
+
+  // 2) Update and draw the player on top of the world
+  player.update(world.platforms);
+  player.draw(world.theme.blob);
+
+  // 3) HUD
+  fill(0);
+  text(world.name, 10, 18);
+  text("Move: A/D or ←/→ • Jump: Space/W/↑ • Next: N", 10, 36);
+}
+
+function keyPressed() {
+  // Jump keys
+  if (key === " " || key === "W" || key === "w" || keyCode === UP_ARROW) {
+    player.jump();
+  }
+
+  // Optional: cycle levels with N (as with the earlier examples)
+  if (key === "n" || key === "N") {
+    const next = (levelIndex + 1) % data.levels.length;
+    loadLevel(next);
+  }
 }
 
 /*
-p5.js DRAW: Runs 60 times per second (game loop)
+Load a level by index:
+- create a WorldLevel instance from JSON
+- resize canvas based on inferred geometry
+- spawn player using level start + physics
 */
-function draw() {
-  // Clear screen with light gray background each frame
-  background(240);
+function loadLevel(i) {
+  levelIndex = i;
 
-  /*
-  CORE RENDERING LOOP: Draw every tile in the grid
-  
-  Nested loops:
-  - Outer loop: iterate ROWS (r = 0 to 10)
-  - Inner loop: iterate COLUMNS in each row (c = 0 to 15)
-  */
-  for (let r = 0; r < grid.length; r++) {
-    for (let c = 0; c < grid[0].length; c++) {
-      // TILE TYPE CHECK: What kind of tile is at grid[r][c]?
-      if (grid[r][c] === 1) {
-        // WALL TILE: Dark teal colour (RGB: 30, 50, 60)
-        fill(30, 50, 60);
-      } else {
-        // FLOOR TILE: Light gray (RGB: 230, 230, 230)
-        fill(230);
-      }
+  // Create the world object from the JSON level object.
+  world = new WorldLevel(data.levels[levelIndex]);
 
-      /*
-      CONVERT GRID COORDS → SCREEN COORDS:
-      - Grid: r=0,c=3     → Screen: x=96, y=0
-      - Grid: r=5,c=7     → Screen: x=224, y=160
-      - x = column × TS    y = row × TS
-      */
-      rect(c * TS, r * TS, TS, TS);
-    }
-  }
+  // Fit canvas to world geometry (or defaults if needed).
+  const W = world.inferWidth(640);
+  const H = world.inferHeight(360);
+  resizeCanvas(W, H);
 
-  // UI LABEL: Explain what students are seeing
-  fill(0); // Black text
-  text("Static array → grid render", 10, 16);
+  // Apply level settings + respawn.
+  player.spawnFromLevel(world);
 }
