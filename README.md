@@ -31,10 +31,10 @@ Learning Goals:
 
 ## Assets
 
-Money_Emoji.png (used on the start screen).
+Money_Emoji.jpeg (used on the start screen).
 Source: Pinterest (original creator not identified), https://ca.pinterest.com/pin/8514686791264877/
 
-You_Won_Emoji.png (used on the end screen).
+You_Won_Emoji.jpeg (used on the end screen).
 Source: Pinterest (original creator not identified), https://ca.pinterest.com/pin/662310688992339214/
 
 ---
