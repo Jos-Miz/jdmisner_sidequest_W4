@@ -14,13 +14,15 @@ Adds:
 let data; // raw JSON data
 let levelIndex = 0;
 let startImg;
+let endImg;
 
 let world; // WorldLevel instance (current level)
 let player; // BlobPlayer instance
 
 function preload() {
   data = loadJSON("levels.json");
-  startImg = loadImage("Money_Emoji.png");
+  startImg = loadImage("Money_Emoji.jpeg"); // if you already have this
+  endImg = loadImage("You_Won_Emoji.jpeg");
 }
 
 function setup() {
@@ -71,30 +73,43 @@ function draw() {
 }
 
 function drawStartScreen() {
-  background(0);
+  background("white");
 
+  // 1️⃣ Draw image FIRST
   imageMode(CENTER);
-  image(startImg, width / 2, height / 2, width, height);
+  image(startImg, width / 2, height / 1.9, 200, 175);
 
-  fill(255);
+  // 2️⃣ Draw text ON TOP
+  fill("black");
   textAlign(CENTER, CENTER);
+
+  textSize(52);
+  text("Make Bands Game", width / 2, 60);
+
   textSize(18);
   text("Press SPACE to Start", width / 2, height - 40);
 
+  // Reset
   textAlign(LEFT, BASELINE);
   textSize(14);
 }
 
 function drawEndScreen() {
-  background("#0B0E18");
-  fill(255);
+  background("white");
+
+  // Draw image first
+  imageMode(CENTER);
+  image(endImg, width / 2, height / 1.8, 360, 240);
+
+  // Draw text on top
+  fill("black");
   textAlign(CENTER, CENTER);
 
   textSize(52);
-  text("You won 3k!!", width / 2, height / 2 - 40);
+  text("You won 3k!!", width / 2, 60);
 
   textSize(18);
-  text("Press N to Restart", width / 2, height / 2 + 30);
+  text("Press N to Restart", width / 2, height - 40);
 
   // Reset text settings
   textAlign(LEFT, BASELINE);

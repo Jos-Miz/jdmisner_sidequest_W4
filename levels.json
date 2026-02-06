@@ -5,16 +5,16 @@
       "name": "START",
       "gravity": 0,
       "jumpV": 0,
-      "theme": { "bg": "#0B0E18", "platform": "#0B0E18", "blob": "#0B0E18" },
+      "theme": { "bg": "#0B3D2E", "platform": "#C9A227", "blob": "#FFFFFF" },
       "start": { "x": 9999, "y": 9999, "r": 0 },
       "platforms": []
     },
 
     {
-      "name": "Intro Steps",
+      "name": "Level 1: Get that moneyyyy!",
       "gravity": 0.65,
       "jumpV": -11.0,
-      "theme": { "bg": "#F0F0F0", "platform": "#C8C8C8", "blob": "#1478FF" },
+      "theme": { "bg": "#0B3D2E", "platform": "#C9A227", "blob": "#FFFFFF" },
       "start": { "x": 80, "y": 220, "r": 26 },
       "money": { "x": 170, "y": 150, "r": 12 },
       "platforms": [
@@ -28,10 +28,10 @@
     },
 
     {
-      "name": "Level 2: Zig Zag",
+      "name": "Level 2: Get rich!!!",
       "gravity": 0.65,
       "jumpV": -11.0,
-      "theme": { "bg": "#101018", "platform": "#FFD166", "blob": "#EF476F" },
+      "theme": { "bg": "#0B3D2E", "platform": "#C9A227", "blob": "#FFFFFF" },
       "start": { "x": 80, "y": 280, "r": 26 },
       "money": { "x": 175, "y": 115, "r": 12 },
       "platforms": [
@@ -48,7 +48,7 @@
       "name": "END",
       "gravity": 0,
       "jumpV": 0,
-      "theme": { "bg": "#0B0E18", "platform": "#0B0E18", "blob": "#0B0E18" },
+      "theme": { "bg": "#0B3D2E", "platform": "#C9A227", "blob": "#FFFFFF" },
       "start": { "x": 9999, "y": 9999, "r": 0 },
       "platforms": []
     }
