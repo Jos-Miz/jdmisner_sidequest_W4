@@ -1,88 +1,200 @@
 /*
-Week 4 — Example 5: Example 5: Blob Platformer (JSON + Classes)
+Week 4 — Example 5: Blob Platformer (JSON + Classes)
 Course: GBDA302
 Instructors: Dr. Karen Cochrane and David Han
 Date: Feb. 5, 2026
 
-This file orchestrates everything:
-- load JSON in preload()
-- create WorldLevel from JSON
-- create BlobPlayer
-- update + draw each frame
-- handle input events (jump, optional next level)
-
-This matches the structure of the original blob sketch from Week 2 but moves
-details into classes.
+Adds:
+- START screen (press SPACE to start)
+- END screen (press N to restart)
+- A "money" goal loaded from JSON
+- If blob touches money -> next level
 */
 
 let data; // raw JSON data
 let levelIndex = 0;
+let startImg;
 
 let world; // WorldLevel instance (current level)
 let player; // BlobPlayer instance
 
 function preload() {
-  // Load the level data from disk before setup runs.
   data = loadJSON("levels.json");
+  startImg = loadImage("Money_Emoji.png");
 }
 
 function setup() {
-  // Create the player once (it will be respawned per level).
+  createCanvas(640, 360);
+
+  // Create the player once (it will be respawned per level)
   player = new BlobPlayer();
 
-  // Load the first level.
+  // Load the first level (START screen should be index 0)
   loadLevel(0);
 
-  // Simple shared style setup.
+  // Shared style
   noStroke();
   textFont("sans-serif");
   textSize(14);
 }
 
 function draw() {
+  // START SCREEN
+  if (world.name === "START") {
+    drawStartScreen();
+    return; // stop the game from running behind the start screen
+  }
+
+  // END SCREEN
+  if (world.name === "END") {
+    drawEndScreen();
+    return; // stop updates
+  }
+
   // 1) Draw the world (background + platforms)
   world.drawWorld();
 
-  // 2) Update and draw the player on top of the world
+  // 2) Draw the money goal
+  drawMoneyGoal();
+
+  // 3) Update + draw player
   player.update(world.platforms);
   player.draw(world.theme.blob);
 
-  // 3) HUD
-  fill(0);
+  // 4) Check collision with money -> next level / end
+  checkMoneyCollision();
+
+  // 5) HUD (make readable on dark levels too)
+  fill(255);
   text(world.name, 10, 18);
-  text("Move: A/D or ←/→ • Jump: Space/W/↑ • Next: N", 10, 36);
+  text("Move: A/D or ←/→ • Jump: Space/W/↑", 10, 36);
+}
+
+function drawStartScreen() {
+  background(0);
+
+  imageMode(CENTER);
+  image(startImg, width / 2, height / 2, width, height);
+
+  fill(255);
+  textAlign(CENTER, CENTER);
+  textSize(18);
+  text("Press SPACE to Start", width / 2, height - 40);
+
+  textAlign(LEFT, BASELINE);
+  textSize(14);
+}
+
+function drawEndScreen() {
+  background("#0B0E18");
+  fill(255);
+  textAlign(CENTER, CENTER);
+
+  textSize(52);
+  text("You won 3k!!", width / 2, height / 2 - 40);
+
+  textSize(18);
+  text("Press N to Restart", width / 2, height / 2 + 30);
+
+  // Reset text settings
+  textAlign(LEFT, BASELINE);
+  textSize(14);
 }
 
 function keyPressed() {
-  // Jump keys
+  // START "button": press SPACE to start (go to level 1)
+  if (world.name === "START" && key === " ") {
+    loadLevel(1);
+    return;
+  }
+
+  // END screen: press N to restart (back to START)
+  if (world.name === "END" && (key === "n" || key === "N")) {
+    loadLevel(0);
+    return;
+  }
+
+  // Jump keys (only during real levels)
   if (key === " " || key === "W" || key === "w" || keyCode === UP_ARROW) {
     player.jump();
   }
 
-  // Optional: cycle levels with N (as with the earlier examples)
-  if (key === "n" || key === "N") {
-    const next = (levelIndex + 1) % data.levels.length;
+  // Optional: cycle levels with N (during gameplay only) — BUT never into START/END
+  if (
+    (key === "n" || key === "N") &&
+    world.name !== "START" &&
+    world.name !== "END"
+  ) {
+    let next = levelIndex + 1;
+
+    // Skip START (0) if you accidentally loop
+    if (next >= data.levels.length) next = 1;
+
     loadLevel(next);
   }
 }
 
-/*
-Load a level by index:
-- create a WorldLevel instance from JSON
-- resize canvas based on inferred geometry
-- spawn player using level start + physics
-*/
 function loadLevel(i) {
   levelIndex = i;
 
-  // Create the world object from the JSON level object.
+  // Create the world object from the JSON level object
   world = new WorldLevel(data.levels[levelIndex]);
 
-  // Fit canvas to world geometry (or defaults if needed).
+  // Ensure money exists + reset collected flag
+  world.money = data.levels[levelIndex].money || null;
+  world.moneyCollected = false;
+
+  // Fit canvas to world geometry (or defaults)
   const W = world.inferWidth(640);
   const H = world.inferHeight(360);
   resizeCanvas(W, H);
 
-  // Apply level settings + respawn.
+  // Respawn player using level start + physics
   player.spawnFromLevel(world);
+}
+
+/* -------------------------
+   MONEY GOAL FUNCTIONS
+-------------------------- */
+
+function drawMoneyGoal() {
+  if (!world.money) return;
+  if (world.moneyCollected) return;
+
+  push(); // prevents textAlign/textSize from messing up HUD
+  textSize(40);
+  textAlign(CENTER, BOTTOM);
+  text("💰", world.money.x, world.money.y + 25);
+  pop();
+}
+
+function checkMoneyCollision() {
+  if (!world.money) return;
+  if (world.moneyCollected) return;
+
+  const touching =
+    dist(player.x, player.y, world.money.x, world.money.y) <
+    player.r + world.money.r;
+
+  if (touching) {
+    world.moneyCollected = true;
+
+    const next = levelIndex + 1;
+
+    // If next level exists, go there
+    if (next < data.levels.length) {
+      loadLevel(next);
+      return;
+    }
+
+    // Otherwise, we beat the last level -> go to END (index 2 if you have START, L1, L2, END)
+    // If your JSON has END as the last level, this will still work:
+    // loadLevel(data.levels.length - 1);
+
+    // SAFEST: if you made END a level in your JSON, jump to it by name
+    const endIndex = data.levels.findIndex((l) => l.name === "END");
+    if (endIndex !== -1) {
+      loadLevel(endIndex);
+    }
+  }
 }
